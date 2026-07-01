@@ -1,6 +1,7 @@
 package ru.practicum.moviehub.http;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
 import ru.practicum.moviehub.api.ErrorResponse;
 import ru.practicum.moviehub.model.Movie;
@@ -152,6 +153,10 @@ public class MoviesHandler extends BaseHttpHandler {
 
             String response = gson.toJson(saveMovie);
             sendJson(exchange, 201, response);
+        } catch (JsonSyntaxException e) {
+            ErrorResponse errorResponse = new ErrorResponse("Некорректный JSON");
+            String errorJson = gson.toJson(errorResponse);
+            sendJson(exchange, 400, errorJson);
         } catch (Exception e) {
             exchange.sendResponseHeaders(500, -1);
             exchange.getResponseBody().close();

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.practicum.moviehub.api.ErrorResponse;
 import ru.practicum.moviehub.model.Movie;
 import ru.practicum.moviehub.store.MoviesStore;
 
@@ -95,7 +96,8 @@ public class MoviesApiTest {
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(422, resp.statusCode());
-        assertTrue(resp.body().contains("error"));
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Ошибка валидации", error.getError());
     }
 
     @Test
@@ -112,6 +114,8 @@ public class MoviesApiTest {
         HttpResponse<String> resp = client.send(req,
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         assertEquals(422, resp.statusCode());
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Ошибка валидации", error.getError());
     }
 
     @Test
@@ -127,6 +131,8 @@ public class MoviesApiTest {
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(422, resp.statusCode());
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Ошибка валидации", error.getError());
     }
 
     @Test
@@ -181,7 +187,8 @@ public class MoviesApiTest {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(404, resp.statusCode());
-        assertTrue(resp.body().contains("Фильм не найден"));
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Фильм не найден", error.getError());
     }
 
     @Test
@@ -195,7 +202,8 @@ public class MoviesApiTest {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(400, resp.statusCode());
-        assertTrue(resp.body().contains("Некорректный ID"));
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Некорректный ID", error.getError());
     }
 
     @Test
@@ -233,7 +241,8 @@ public class MoviesApiTest {
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(404, resp.statusCode());
-        assertTrue(resp.body().contains("Фильм не найден"));
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Фильм не найден", error.getError());
     }
 
     @Test
@@ -247,7 +256,8 @@ public class MoviesApiTest {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(400, resp.statusCode());
-        assertTrue(resp.body().contains("Некорректный ID"));
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Некорректный ID", error.getError());
     }
 
     @Test
@@ -301,7 +311,8 @@ public class MoviesApiTest {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
         assertEquals(400, resp.statusCode());
-        assertTrue(resp.body().contains("Некорректный параметр запроса"));
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Некорректный параметр запроса — 'year'", error.getError());
     }
 
     private void addMovie(String title, int year) throws Exception {
@@ -313,4 +324,38 @@ public class MoviesApiTest {
                 .build();
         client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     }
+
+    @Test
+    void postMovieInvalidJson() throws Exception {
+        String invalidJson = "{\"title\":\"Интерстеллар,\"year\":2014";
+
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(invalidJson, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> resp = client.send(req,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        assertEquals(400, resp.statusCode());
+        ErrorResponse error = gson.fromJson(resp.body(), ErrorResponse.class);
+        assertEquals("Некорректный JSON", error.getError());
+    }
+
+    @Test
+    void putMethod() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .PUT(HttpRequest.BodyPublishers.ofString("{\"title\":\"Тестовый фильм\",\"year\":2020}",
+                        StandardCharsets.UTF_8))
+                .header("Content-Type", "application/json")
+                .build();
+
+        HttpResponse<String> resp = client.send(req,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        assertEquals(405, resp.statusCode());
+    }
+
 }
